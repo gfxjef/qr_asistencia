@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Administrar Charlas | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Administrar Charlas</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('nueva_charla') }}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Nueva Charla
+            </a>
+            <a href="{{ url_for('admin') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    {% if charlas %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Fecha</th>
+                        <th>Asistentes</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for charla in charlas %}
+                    <tr>
+                        <td>{{ charla.id }}</td>
+                        <td>{{ charla.nombre }}</td>
+                        <td>
+                            {% if charla.fecha %}
+                                {{ charla.fecha.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                                <span class="text-muted">Sin fecha</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('ver_charla', id=charla.id, view='registros') }}" class="badge bg-primary">
+                                {{ charla.asistentes|length }} registros
+                            </a>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('ver_charla', id=charla.id) }}" class="btn btn-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('editar_charla', id=charla.id) }}" class="btn btn-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="#" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ charla.id }}">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                            
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteModal{{ charla.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ charla.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ charla.id }}">Confirmar Eliminación</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>¿Está seguro que desea eliminar la charla <strong>{{ charla.nombre }}</strong>?</p>
+                                            <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <form action="{{ url_for('eliminar_charla', id=charla.id) }}" method="post" style="display: inline;">
+                                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <h4 class="alert-heading">No hay charlas registradas</h4>
+            <p>Para comenzar, haga clic en "Nueva Charla" para crear su primera charla.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Asistencia | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1>Confirmar Asistencia</h1>
+            <p class="lead">Escanea el código QR de los asistentes para registrar su ingreso</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna del escáner QR (50% en desktop) -->
+        <div class="col-md-6 mb-4 mb-md-0">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Escáner QR</h3>
+                </div>
+                <div class="card-body text-center d-flex flex-column">
+                    <div id="qr-reader" class="mb-3" style="width: 100%; max-width: 500px; margin: 0 auto;"></div>
+                    <div class="mt-auto">
+                        <p class="text-muted small">Enfoca el código QR del asistente con la cámara</p>
+                        <div id="scanning-status" class="badge bg-success">Escáner Activo</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Columna de información (50% en desktop) -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h3 class="card-title mb-0">Información del Asistente</h3>
+                </div>
+                <div class="card-body" id="info-asistente">
+                    <div class="text-center py-5">
+                        <img src="{{ url_for('static', filename='site.css') | replace('site.css', 'qr-scan.png') }}" 
+                             alt="Escanear QR" style="max-width: 150px; opacity: 0.3;" class="mb-4"
+                             onerror="this.style.display='none';">
+                        <h4 class="text-muted">Esperando escaneo de código QR</h4>
+                        <p class="text-muted">La información del asistente aparecerá aquí después de escanear un código QR</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incluir HTML5-QRCode library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const html5QrCode = new Html5Qrcode("qr-reader");
+    const infoAsistente = document.getElementById('info-asistente');
+    const scanningStatus = document.getElementById('scanning-status');
+    let isScanning = true;
+    let lastScannedCode = "";
+    let scanTimeout = null;
+    
+    // Configuración del escáner
+    const qrScannerConfig = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    };
+    
+    // Función para iniciar el escáner
+    function startScanner() {
+        isScanning = true;
+        scanningStatus.textContent = "Escáner Activo";
+        scanningStatus.className = "badge bg-success";
+        
+        html5QrCode.start(
+            { facingMode: "environment" }, // Usar cámara trasera si está disponible
+            qrScannerConfig,
+            onScanSuccess,
+            onScanFailure
+        ).catch((err) => {
+            console.log("Error al iniciar el escáner: ", err);
+            infoAsistente.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Error al iniciar la cámara:</strong> ${err}
+                </div>
+                <p class="text-center">Asegúrate de que tu dispositivo tiene una cámara y has concedido los permisos necesarios.</p>
+            `;
+            scanningStatus.textContent = "Error en Cámara";
+            scanningStatus.className = "badge bg-danger";
+        });
+    }
+    
+    // Iniciar el escáner automáticamente al cargar la página
+    startScanner();
+    
+    // Función que se ejecuta cuando se escanea un código QR con éxito
+    function onScanSuccess(decodedText, decodedResult) {
+        // Verificar si es el mismo código que acabamos de escanear (evitar escaneos duplicados)
+        if (decodedText === lastScannedCode) return;
+        
+        // Almacenar el código escaneado para evitar duplicados inmediatos
+        lastScannedCode = decodedText;
+        
+        console.log(`Código escaneado: ${decodedText}`);
+        
+        // Beep de éxito
+        const beep = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU9vT18=");
+        beep.play();
+        
+        // Pausar el escáner temporalmente
+        isScanning = false;
+        scanningStatus.textContent = "Procesando...";
+        scanningStatus.className = "badge bg-warning";
+        
+        // Mostrar spinner mientras se procesa
+        infoAsistente.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-3">Procesando información del asistente...</p>
+            </div>
+        `;
+
+        // Hacer una petición al servidor para obtener la información del asistente
+        fetch(`/asistente-info?codigo=${encodeURIComponent(decodedText)}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            // Si la respuesta es una redirección (no es AJAX), seguimos la redirección
+            if (response.redirected) {
+                window.location.href = response.url;
+                return null;
+            }
+            // Continuamos procesando la respuesta
+            return response.text();
+        })
+        .then(html => {
+            if (html) {
+                // Mostrar la información del asistente en el panel derecho
+                infoAsistente.innerHTML = html;
+                
+                // Configurar reactivación automática después de 2 segundos
+                if (scanTimeout) clearTimeout(scanTimeout);
+                scanTimeout = setTimeout(() => {
+                    // Limpiar el último código escaneado para permitir escanear el mismo código de nuevo
+                    lastScannedCode = "";
+                    
+                    // Reactivar el escáner automáticamente
+                    isScanning = true;
+                    scanningStatus.textContent = "Escáner Activo";
+                    scanningStatus.className = "badge bg-success";
+                }, 2000); // 2000 ms = 2 segundos
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            infoAsistente.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> No se pudo procesar la solicitud.
+                </div>
+                <div class="mt-3 text-center">
+                    <p>Se reactivará automáticamente en 2 segundos...</p>
+                </div>
+            `;
+            
+            // Configurar reactivación automática después de error
+            if (scanTimeout) clearTimeout(scanTimeout);
+            scanTimeout = setTimeout(() => {
+                // Limpiar el último código escaneado para permitir escanear el mismo código de nuevo
+                lastScannedCode = "";
+                
+                // Reactivar el escáner automáticamente
+                isScanning = true;
+                scanningStatus.textContent = "Escáner Activo";
+                scanningStatus.className = "badge bg-success";
+            }, 2000); // 2000 ms = 2 segundos
+        });
+    }
+    
+    // Función que maneja errores de escaneo
+    function onScanFailure(error) {
+        // No hacemos nada para evitar mensajes de error continuos
+    }
+});
+</script>
+{% endblock %}

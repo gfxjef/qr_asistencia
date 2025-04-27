@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Registros - {{ charla.nombre }} | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Cabecera simple con el nombre de la charla -->
+    <div class="row mb-4">
+        <div class="col text-center">
+            <h1>{{ charla.nombre }} - Registros</h1>
+        </div>
+    </div>
+
+    <!-- Mensajes flash para notificaciones -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Lista de asistentes registrados -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0">Asistentes Registrados</h3>
+        </div>
+        <div class="card-body">
+            {% if charla.asistentes %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Empresa</th>
+                            <th>DNI</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for asistente in charla.asistentes %}
+                            <tr>
+                                <td>{{ asistente.nombres }}</td>
+                                <td>{{ asistente.empresa }}</td>
+                                <td>{{ asistente.dni }}</td>
+                                <td>
+                                    {% set asistio = false %}
+                                    {% for asistencia in asistencias %}
+                                        {% if asistencia.asistente_id == asistente.id and asistencia.asistio %}
+                                            {% set asistio = true %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if asistio %}
+                                        <span class="badge bg-success">Asistió</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-center">No hay asistentes registrados para esta charla.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Botones de navegación -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('ver_charla', id=charla.id) }}" class="btn btn-primary btn-lg">Volver a Escanear QR</a>
+        <a href="{{ url_for('home') }}" class="btn btn-secondary btn-lg ms-3">Volver al Inicio</a>
+    </div>
+</div>
+{% endblock %}

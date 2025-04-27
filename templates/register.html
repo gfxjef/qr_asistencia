@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Asistente | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">Registrar Nuevo Asistente</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="nombres" class="form-label">Nombres y Apellidos *</label>
+                            <input type="text" class="form-control" id="nombres" name="nombres" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dni" class="form-label">DNI / Documento *</label>
+                            <input type="text" class="form-control" id="dni" name="dni" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="empresa" class="form-label">Empresa / Institución *</label>
+                            <input type="text" class="form-control" id="empresa" name="empresa" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cargo" class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="cargo" name="cargo">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="correo" class="form-label">Correo Electrónico *</label>
+                            <input type="email" class="form-control" id="correo" name="correo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="numero" class="form-label">Número Telefónico</label>
+                            <input type="tel" class="form-control" id="numero" name="numero">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Charlas a las que asistirá</label>
+                        <div class="row">
+                            {% for charla in charlas %}
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="charlas" value="{{ charla.id }}" id="charla{{ charla.id }}">
+                                    <label class="form-check-label" for="charla{{ charla.id }}">
+                                        {{ charla.nombre }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Registrar y Generar QR</button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

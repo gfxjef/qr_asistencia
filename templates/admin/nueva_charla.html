@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Nueva Charla | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Nueva Charla</h1>
+            <p class="lead">Complete el formulario para crear una nueva charla</p>
+        </div>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Datos de la Charla</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('nueva_charla') }}">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre de la Charla *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                            <div class="form-text">Ingrese un nombre descriptivo para la charla.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                            <div class="form-text">Una breve descripción del contenido o propósito de la charla.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="fecha" class="form-label">Fecha y Hora</label>
+                            <input type="datetime-local" class="form-control" id="fecha" name="fecha">
+                            <div class="form-text">Opcional. La fecha y hora programada para la charla.</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Crear Charla
+                            </button>
+                            <a href="{{ url_for('admin_charlas') }}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-danger">* Campo obligatorio</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

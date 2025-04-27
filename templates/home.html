@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 text-center">
+        <h1 class="display-4 mb-4">Sistema de Asistencia con QR</h1>
+        <p class="lead mb-5">Genera códigos QR para registrar asistentes a eventos y charlas. Fácil de usar, rápido y eficiente.</p>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Registrar Asistente</h5>
+                        <p class="card-text">Añade un nuevo asistente y genera su código QR personalizado.</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary">Registrar</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Ver Asistentes</h5>
+                        <p class="card-text">Gestiona la lista de asistentes registrados.</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Dashboard</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Confirmar Asistencia</h5>
+                        <p class="card-text">Confirma la asistencia de participantes a las charlas.</p>
+                        <a href="{{ url_for('confirmar_asistencia') }}" class="btn btn-success">Confirmar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de Charlas Disponibles -->
+        <div class="mt-5">
+            <h2 class="mb-4">Charlas Disponibles</h2>
+            <div class="row">
+                {% for charla in charlas %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ charla.nombre }}</h5>
+                            <p class="card-text">{{ charla.descripcion }}</p>
+                            <a href="{{ url_for('ver_charla', id=charla.id) }}" class="btn btn-outline-primary">Ver Detalles</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

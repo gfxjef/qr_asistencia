@@ -1,0 +1,10 @@
+flask
+flask-sqlalchemy
+qrcode[pil]
+flask-wtf
+flask-migrate
+python-dateutil
+pandas
+xlsxwriter
+matplotlib
+numpy

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Código QR | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="card-title mb-0">Código QR Generado</h3>
+            </div>
+            <div class="card-body text-center">
+                <h4 class="mb-4">{{ asistente.nombres }}</h4>
+                <p class="mb-3">
+                    <strong>Empresa:</strong> {{ asistente.empresa }}<br>
+                    <strong>DNI:</strong> {{ asistente.dni }}<br>
+                    <strong>Correo:</strong> {{ asistente.correo }}
+                </p>
+                
+                {% if asistente.codigoQR %}
+                    <div class="my-4">
+                        <img src="{{ url_for('static', filename=asistente.codigoQR.replace('static/', '')) }}" 
+                             alt="Código QR" class="img-fluid qr-code">
+                    </div>
+                    <div class="d-grid gap-2 col-md-6 mx-auto">
+                        <a href="{{ url_for('static', filename=asistente.codigoQR.replace('static/', '')) }}" 
+                           download="QR_{{ asistente.nombres }}.png" 
+                           class="btn btn-primary">
+                            Descargar QR
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        No se ha generado un código QR para este asistente.
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        Volver al Dashboard
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-primary">
+                        Registrar Otro
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .qr-code {
+        max-width: 250px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        background-color: white;
+    }
+</style>
+{% endblock %}

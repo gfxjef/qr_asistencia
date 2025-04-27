@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Administración | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Panel de Administración</h1>
+            <p class="lead">Gestione los recursos del sistema</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">Charlas</h4>
+                </div>
+                <div class="card-body">
+                    <p>Administre las charlas del sistema. Cree nuevas charlas, edite o elimine las existentes.</p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('admin_charlas') }}" class="btn btn-outline-primary">Ir a Charlas</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="card-title mb-0">Asistentes</h4>
+                </div>
+                <div class="card-body">
+                    <p>Gestione los asistentes registrados. Vea detalles, códigos QR y confirme asistencia.</p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-success">Ir a Dashboard</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="card-title mb-0">Estadísticas</h4>
+                </div>
+                <div class="card-body">
+                    <p>Consulte estadísticas del sistema: asistencia, registros, participación por charlas.</p>
+                </div>
+                <div class="card-footer">
+                    <a href="#reportes-section" class="btn btn-outline-info">Ver Reportes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="card-title mb-0">Resumen del Sistema</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3">
+                                <h2 class="text-primary">{{ charlas_total }}</h2>
+                                <p class="mb-0">Charlas registradas</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3">
+                                <h2 class="text-success">{{ asistentes_total }}</h2>
+                                <p class="mb-0">Asistentes registrados</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3">
+                                <h2 class="text-info">{{ asistencias_total }}</h2>
+                                <p class="mb-0">Asistencias confirmadas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="card-title mb-0">Acciones Rápidas</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('nueva_charla') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Nueva Charla
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn btn-success">
+                            <i class="bi bi-person-plus"></i> Registrar Asistente
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nueva sección de exportación de reportes -->
+    <div id="reportes-section" class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="card-title mb-0">Exportación de Reportes</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="card-title mb-0">Exportar Registros</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Exporta un listado de todos los asistentes registrados en el sistema, independientemente de si asistieron o no.</p>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{{ url_for('export_registros') }}" class="btn btn-primary">
+                                        <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="card-title mb-0">Exportar Asistentes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Exporta un listado de los asistentes que confirmaron su asistencia, con hojas separadas para cada charla.</p>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{{ url_for('export_asistentes') }}" class="btn btn-success">
+                                        <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="card-title mb-0">Reporte General</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Genera un reporte estadístico completo con gráficos sobre la asistencia y participación en las charlas.</p>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{{ url_for('export_reporte') }}" class="btn btn-info">
+                                        <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}

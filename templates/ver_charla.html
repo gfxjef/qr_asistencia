@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ charla.nombre }} | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Cabecera simple con el nombre de la charla -->
+    <div class="row mb-4">
+        <div class="col text-center">
+            <h1>{{ charla.nombre }}</h1>
+        </div>
+    </div>
+
+    <!-- Mensajes flash para notificaciones -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Contenedor del lector QR (siempre visible por defecto) -->
+    <div id="qr-section" class="mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div id="qr-reader" style="width: 100%; max-width: 500px; margin: 0 auto;"></div>
+                <div class="mt-4" id="qr-result">
+                    <p class="text-muted">Escanee un código QR para registrar la asistencia a esta charla.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botones de navegación -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('ver_charla', id=charla.id, view='registros') }}" class="btn btn-primary btn-lg">Ver Registros</a>
+        <a href="{{ url_for('home') }}" class="btn btn-secondary btn-lg ms-3">Volver al Inicio</a>
+    </div>
+</div>
+
+<!-- Incluir HTML5-QRCode library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Referencias a elementos DOM
+    const qrResult = document.getElementById('qr-result');
+    
+    // Referencias para el lector QR
+    let html5QrCode;
+    const charlaId = "{{ charla.id }}";
+    
+    // Configuración del lector QR
+    const qrScannerConfig = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    };
+    
+    // Iniciar el lector QR automáticamente
+    iniciarLectorQR();
+    
+    // Función para iniciar el lector QR
+    function iniciarLectorQR() {
+        html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrCode.start(
+            { facingMode: "environment" }, // Usar cámara trasera si está disponible
+            qrScannerConfig,
+            onScanSuccess,
+            onScanFailure
+        ).catch((err) => {
+            console.log("Error al iniciar el escáner: ", err);
+            qrResult.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> No se pudo iniciar la cámara. ${err}
+                </div>
+            `;
+        });
+    }
+    
+    // Función que se ejecuta cuando se escanea un código QR con éxito
+    function onScanSuccess(decodedText, decodedResult) {
+        console.log(`Código escaneado: ${decodedText}`);
+        
+        // Beep de éxito
+        const beep = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU9vT18=");
+        beep.play();
+        
+        // Detener el lector QR temporalmente
+        html5QrCode.stop();
+        
+        // Mostrar spinner mientras se procesa
+        qrResult.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Procesando información...</p>
+            </div>
+        `;
+        
+        // Enviar el código escaneado al servidor para confirmar asistencia a la charla
+        fetch('/confirmar-charla/' + charlaId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ codigo: decodedText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                qrResult.innerHTML = `
+                    <div class="alert alert-success mb-3">
+                        <strong>¡Asistencia confirmada!</strong><br>
+                        ${data.asistente.nombres} - ${data.asistente.empresa}
+                    </div>
+                    <button class="btn btn-primary" id="btn-escanear-otro">Escanear otro código</button>
+                `;
+                
+                // Agregar evento al botón "Escanear otro código"
+                document.getElementById('btn-escanear-otro').addEventListener('click', function() {
+                    iniciarLectorQR();
+                    qrResult.innerHTML = `
+                        <p class="text-muted">Escanee un código QR para registrar la asistencia a esta charla.</p>
+                    `;
+                });
+            } else {
+                // Mostrar mensaje de error
+                qrResult.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> ${data.message}
+                    </div>
+                    <button class="btn btn-primary" id="btn-escanear-otro">Intentar de nuevo</button>
+                `;
+                
+                // Agregar evento al botón "Intentar de nuevo"
+                document.getElementById('btn-escanear-otro').addEventListener('click', function() {
+                    iniciarLectorQR();
+                    qrResult.innerHTML = `
+                        <p class="text-muted">Escanee un código QR para registrar la asistencia a esta charla.</p>
+                    `;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            qrResult.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> No se pudo procesar la solicitud.
+                </div>
+                <button class="btn btn-primary" id="btn-escanear-otro">Intentar de nuevo</button>
+            `;
+            
+            // Agregar evento al botón "Intentar de nuevo"
+            document.getElementById('btn-escanear-otro').addEventListener('click', function() {
+                iniciarLectorQR();
+                qrResult.innerHTML = `
+                    <p class="text-muted">Escanee un código QR para registrar la asistencia a esta charla.</p>
+                `;
+            });
+        });
+    }
+    
+    // Función que maneja errores de escaneo
+    function onScanFailure(error) {
+        // No hacemos nada para evitar mensajes de error continuos
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}

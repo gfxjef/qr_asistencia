@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Información del Asistente | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Información del Asistente</h3>
+                </div>
+                <div class="card-body">
+                    {% if asistente %}
+                        <div class="text-center mb-4">
+                            {% if ya_registrado %}
+                                <!-- Mostrar mensaje de "ya registrado" -->
+                                <div class="alert alert-warning">
+                                    <strong>¡Atención!</strong> {{ mensaje_registro or "Este QR ya fue registrado anteriormente" }}
+                                </div>
+                            {% else %}
+                                <!-- Mensaje de éxito normal -->
+                                <div class="alert alert-success">
+                                    <strong>¡Asistencia confirmada!</strong> El registro se ha completado exitosamente.
+                                </div>
+                            {% endif %}
+                            
+                            {% if asistente.fecha_asistencia %}
+                                <p class="text-muted">
+                                    Hora de registro: {{ asistente.fecha_asistencia.strftime('%d/%m/%Y %H:%M:%S') }}
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <h4>{{ asistente.nombres }}</h4>
+                        <hr>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Empresa:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ asistente.empresa }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>DNI:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ asistente.dni }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Cargo:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ asistente.cargo or 'No especificado' }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Correo:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ asistente.correo }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Teléfono:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ asistente.numero or 'No especificado' }}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h5>Charlas registradas:</h5>
+                            {% if charlas %}
+                                <div class="list-group">
+                                    {% for charla in charlas %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>{{ charla.nombre }}</strong>
+                                                <a href="{{ url_for('charla_asistencia', id=charla.id) }}" class="btn btn-sm btn-outline-primary">
+                                                    Registrar asistencia a charla
+                                                </a>
+                                            </div>
+                                            <p class="text-muted mb-0">{{ charla.descripcion }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No hay charlas registradas para este asistente.</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            <strong>Error:</strong> {{ error_message or 'No se pudo encontrar información del asistente.' }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{{ url_for('confirmar_asistencia') }}" class="btn btn-primary btn-lg">Escanear otro código</a>
+                <a href="{{ url_for('home') }}" class="btn btn-outline-secondary btn-lg ms-2">Volver al inicio</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

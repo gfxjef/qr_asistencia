@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}Asistencia a {{ charla.nombre }} | QR Asistencia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>{{ charla.nombre }}</h1>
+            <p class="lead">{{ charla.descripcion }}</p>
+            <p class="text-muted">
+                {% if charla.fecha %}
+                    Fecha: {{ charla.fecha.strftime('%d/%m/%Y %H:%M') }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Escáner QR para confirmar asistencia</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div id="qr-reader" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Resultado</h3>
+                </div>
+                <div class="card-body" id="resultado">
+                    <p class="text-center text-muted">
+                        Escanee el código QR de un asistente para registrar su asistencia a esta charla.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('home') }}" class="btn btn-secondary">Volver al inicio</a>
+    </div>
+</div>
+
+<!-- Incluir HTML5-QRCode library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const html5QrCode = new Html5Qrcode("qr-reader");
+    const resultado = document.getElementById('resultado');
+    const charlaId = "{{ charla.id }}";
+    
+    // Configuración del escáner
+    const qrScannerConfig = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    };
+    
+    // Iniciar el escáner automáticamente al cargar la página
+    html5QrCode.start(
+        { facingMode: "environment" }, // Usar cámara trasera si está disponible
+        qrScannerConfig,
+        onScanSuccess,
+        onScanFailure
+    ).catch((err) => {
+        console.log("Error al iniciar el escáner: ", err);
+        alert("Error al iniciar la cámara: " + err);
+    });
+    
+    // Función que se ejecuta cuando se escanea un código QR con éxito
+    function onScanSuccess(decodedText, decodedResult) {
+        console.log(`Código escaneado: ${decodedText}`);
+        
+        // Beep de éxito
+        const beep = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU9vT18=");
+        beep.play();
+        
+        // Mostrar spinner mientras se procesa
+        resultado.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Procesando información...</p>
+            </div>
+        `;
+        
+        // Enviar el código escaneado al servidor para confirmar asistencia a la charla
+        fetch('/confirmar-charla/' + charlaId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ codigo: decodedText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                resultado.innerHTML = `
+                    <div class="alert alert-success mb-3">
+                        <strong>¡Asistencia confirmada!</strong>
+                    </div>
+                    <h4>${data.asistente.nombres}</h4>
+                    <p><strong>Empresa:</strong> ${data.asistente.empresa}</p>
+                    <p><strong>DNI:</strong> ${data.asistente.dni}</p>
+                    <p><strong>Cargo:</strong> ${data.asistente.cargo || 'No especificado'}</p>
+                    <p class="text-success"><strong>Asistencia registrada a:</strong> ${data.charla.nombre}</p>
+                    
+                    <div class="mt-3">
+                        <button class="btn btn-primary" id="escanear-otro">Escanear otro código</button>
+                    </div>
+                `;
+                
+                // Detener el escáner después de un escaneo exitoso
+                html5QrCode.stop();
+                
+                // Agregar evento al botón "Escanear otro código"
+                document.getElementById('escanear-otro').addEventListener('click', function() {
+                    // Reiniciar el escáner
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        qrScannerConfig,
+                        onScanSuccess,
+                        onScanFailure
+                    );
+                    
+                    // Restablecer el mensaje
+                    resultado.innerHTML = `
+                        <p class="text-center text-muted">
+                            Escanee el código QR de un asistente para registrar su asistencia a esta charla.
+                        </p>
+                    `;
+                });
+            } else {
+                // Mostrar mensaje de error
+                resultado.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> ${data.message}
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" id="escanear-otro">Intentar de nuevo</button>
+                    </div>
+                `;
+                
+                // Detener el escáner
+                html5QrCode.stop();
+                
+                // Agregar evento al botón "Intentar de nuevo"
+                document.getElementById('escanear-otro').addEventListener('click', function() {
+                    // Reiniciar el escáner
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        qrScannerConfig,
+                        onScanSuccess,
+                        onScanFailure
+                    );
+                    
+                    // Restablecer el mensaje
+                    resultado.innerHTML = `
+                        <p class="text-center text-muted">
+                            Escanee el código QR de un asistente para registrar su asistencia a esta charla.
+                        </p>
+                    `;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resultado.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> No se pudo procesar la solicitud.
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-primary" id="escanear-otro">Intentar de nuevo</button>
+                </div>
+            `;
+            
+            // Detener el escáner
+            html5QrCode.stop();
+            
+            // Agregar evento al botón "Intentar de nuevo"
+            document.getElementById('escanear-otro').addEventListener('click', function() {
+                // Reiniciar el escáner
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    qrScannerConfig,
+                    onScanSuccess,
+                    onScanFailure
+                );
+                
+                // Restablecer el mensaje
+                resultado.innerHTML = `
+                    <p class="text-center text-muted">
+                        Escanee el código QR de un asistente para registrar su asistencia a esta charla.
+                    </p>
+                `;
+            });
+        });
+    }
+    
+    // Función que maneja errores de escaneo
+    function onScanFailure(error) {
+        // No hacemos nada para evitar mensajes de error continuos
+    }
+});
+</script>
+{% endblock %}
